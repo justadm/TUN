@@ -19,6 +19,7 @@ func main() {
 	serverID := flag.String("server-id", "", "16-byte hex server id")
 	serverStaticPrivB64 := flag.String("server-static-priv", "", "base64 x25519 private key")
 	bench := flag.Bool("bench", false, "enable benchmark mode")
+	plain := flag.Bool("plain", false, "disable AEAD and send plaintext (testing only)")
 	flag.Parse()
 
 	if *cert == "" || *key == "" {
@@ -58,7 +59,7 @@ func main() {
 		}
 		go func() {
 			defer conn.Close()
-			sess, err := core.ServerHandshake(conn, sid, serverStaticPriv)
+			sess, err := core.ServerHandshakeWithOptions(conn, sid, serverStaticPriv, *plain)
 			if err != nil {
 				log.Printf("handshake failed: %v", err)
 				return

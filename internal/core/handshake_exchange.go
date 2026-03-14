@@ -13,6 +13,10 @@ var (
 
 // ClientHandshake performs a basic client-side handshake over a stream.
 func ClientHandshake(rw io.ReadWriter, clientID [16]byte, serverStaticPub []byte) (*Session, error) {
+	return ClientHandshakeWithOptions(rw, clientID, serverStaticPub, false)
+}
+
+func ClientHandshakeWithOptions(rw io.ReadWriter, clientID [16]byte, serverStaticPub []byte, plain bool) (*Session, error) {
 	curve := ecdh.X25519()
 	clientEphPriv, err := curve.GenerateKey(rand.Reader)
 	if err != nil {
@@ -61,11 +65,16 @@ func ClientHandshake(rw io.ReadWriter, clientID [16]byte, serverStaticPub []byte
 		return nil, err
 	}
 	sess := NewSession(AEADChaCha20Poly1305, kc2s, ks2c)
+	sess.Plain = plain
 	return sess, nil
 }
 
 // ServerHandshake performs a basic server-side handshake over a stream.
 func ServerHandshake(rw io.ReadWriter, serverID [16]byte, serverStaticPriv *ecdh.PrivateKey) (*Session, error) {
+	return ServerHandshakeWithOptions(rw, serverID, serverStaticPriv, false)
+}
+
+func ServerHandshakeWithOptions(rw io.ReadWriter, serverID [16]byte, serverStaticPriv *ecdh.PrivateKey, plain bool) (*Session, error) {
 	req, err := ReadMsg(rw)
 	if err != nil {
 		return nil, err
@@ -116,5 +125,6 @@ func ServerHandshake(rw io.ReadWriter, serverID [16]byte, serverStaticPriv *ecdh
 		return nil, err
 	}
 	sess := NewSession(AEADChaCha20Poly1305, kc2s, ks2c)
+	sess.Plain = plain
 	return sess, nil
 }

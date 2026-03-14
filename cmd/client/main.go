@@ -23,6 +23,7 @@ func main() {
 	benchBytes := flag.Int("bench-bytes", 100<<20, "total bytes to send in benchmark")
 	benchFrame := flag.Int("bench-frame", 16<<10, "frame payload size in benchmark")
 	benchConns := flag.Int("bench-conns", 1, "number of parallel connections in benchmark")
+	plain := flag.Bool("plain", false, "disable AEAD and send plaintext (testing only)")
 	flag.Parse()
 
 	if *clientID == "" || *serverStaticPubB64 == "" {
@@ -67,7 +68,7 @@ func main() {
 				if idx == 0 {
 					bytesToSend += rem
 				}
-				sent, dur, err := runBenchConn(dialer, *addr, cid, serverPub, bytesToSend, *benchFrame)
+				sent, dur, err := runBenchConn(dialer, *addr, cid, serverPub, bytesToSend, *benchFrame, *plain)
 				results <- result{sent: sent, dur: dur, err: err}
 			}(i)
 		}
@@ -96,7 +97,7 @@ func main() {
 		defer conn.Close()
 		log.Printf("connected to %s", *addr)
 
-		sess, err := core.ClientHandshake(conn, cid, serverPub)
+		sess, err := core.ClientHandshakeWithOptions(conn, cid, serverPub, *plain)
 		if err != nil {
 			log.Fatalf("handshake: %v", err)
 		}
@@ -119,7 +120,7 @@ func main() {
 	}
 }
 
-func runBenchConn(dialer *tlsstream.Dialer, addr string, cid [16]byte, serverPub []byte, total, frameSize int) (int, time.Duration, error) {
+func runBenchConn(dialer *tlsstream.Dialer, addr string, cid [16]byte, serverPub []byte, total, frameSize int, plain bool) (int, time.Duration, error) {
 	if frameSize <= 0 {
 		frameSize = 16 << 10
 	}
@@ -129,7 +130,7 @@ func runBenchConn(dialer *tlsstream.Dialer, addr string, cid [16]byte, serverPub
 	}
 	defer conn.Close()
 
-	sess, err := core.ClientHandshake(conn, cid, serverPub)
+	sess, err := core.ClientHandshakeWithOptions(conn, cid, serverPub, plain)
 	if err != nil {
 		return 0, 0, err
 	}

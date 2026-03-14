@@ -17,6 +17,7 @@ type Session struct {
 	ReplayC2S *ReplayWindow
 	ReplayS2C *ReplayWindow
 	AEADAlg   string
+	Plain     bool
 }
 
 func NewSession(aeadAlg string, keyC2S, keyS2C []byte) *Session {
@@ -28,24 +29,28 @@ func NewSession(aeadAlg string, keyC2S, keyS2C []byte) *Session {
 		ReplayC2S: NewReplayWindow(4096),
 		ReplayS2C: NewReplayWindow(4096),
 		AEADAlg:   aeadAlg,
+		Plain:     false,
 	}
 }
 
 // EncryptFrame encrypts a payload into a Frame for the given direction.
 // direction: 0x00 for c2s, 0x01 for s2c.
 func (s *Session) EncryptFrame(direction byte, msgType uint8, payload []byte) ([]byte, error) {
+	if s.Plain {
+		f := &Frame{
+			Version:  VersionV1,
+			MsgType:  msgType,
+			Flags:    0,
+			Reserved: 0,
+			Seq:      s.nextSeq(direction),
+			Payload:  payload,
+		}
+		return f.MarshalBinary()
+	}
 	if len(s.KeyC2S) == 0 || len(s.KeyS2C) == 0 {
 		return nil, ErrNoKeys
 	}
-	var seq *uint64
-	var key []byte
-	if direction == 0x00 {
-		seq = &s.SeqC2S
-		key = s.KeyC2S
-	} else {
-		seq = &s.SeqS2C
-		key = s.KeyS2C
-	}
+	seq, key := s.selectSeqKey(direction)
 	*seq++
 	nonce := NonceFromSeq(direction, *seq)
 	ct, err := Encrypt(s.AEADAlg, key, nonce, nil, payload)
@@ -71,6 +76,16 @@ func (s *Session) DecryptFrame(direction byte, frameBytes []byte) ([]byte, error
 
 // DecryptFrameWithType parses and decrypts a frame, returning message type and plaintext.
 func (s *Session) DecryptFrameWithType(direction byte, frameBytes []byte) (uint8, []byte, error) {
+	if s.Plain {
+		var f Frame
+		if err := f.UnmarshalBinary(frameBytes); err != nil {
+			return 0, nil, err
+		}
+		if !s.selectReplay(direction).Accept(f.Seq) {
+			return 0, nil, ErrReplayDetected
+		}
+		return f.MsgType, f.Payload, nil
+	}
 	if len(s.KeyC2S) == 0 || len(s.KeyS2C) == 0 {
 		return 0, nil, ErrNoKeys
 	}
@@ -78,15 +93,8 @@ func (s *Session) DecryptFrameWithType(direction byte, frameBytes []byte) (uint8
 	if err := f.UnmarshalBinary(frameBytes); err != nil {
 		return 0, nil, err
 	}
-	var replay *ReplayWindow
-	var key []byte
-	if direction == 0x00 {
-		replay = s.ReplayC2S
-		key = s.KeyC2S
-	} else {
-		replay = s.ReplayS2C
-		key = s.KeyS2C
-	}
+	replay := s.selectReplay(direction)
+	_, key := s.selectSeqKey(direction)
 	if !replay.Accept(f.Seq) {
 		return 0, nil, ErrReplayDetected
 	}
@@ -96,4 +104,24 @@ func (s *Session) DecryptFrameWithType(direction byte, frameBytes []byte) (uint8
 		return 0, nil, err
 	}
 	return f.MsgType, pt, nil
+}
+
+func (s *Session) nextSeq(direction byte) uint64 {
+	seq, _ := s.selectSeqKey(direction)
+	*seq++
+	return *seq
+}
+
+func (s *Session) selectReplay(direction byte) *ReplayWindow {
+	if direction == 0x00 {
+		return s.ReplayC2S
+	}
+	return s.ReplayS2C
+}
+
+func (s *Session) selectSeqKey(direction byte) (*uint64, []byte) {
+	if direction == 0x00 {
+		return &s.SeqC2S, s.KeyC2S
+	}
+	return &s.SeqS2C, s.KeyS2C
 }
