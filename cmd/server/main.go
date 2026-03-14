@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"flag"
 	"log"
+	"time"
 
 	"tun/internal/core"
 	"tun/internal/transport/tlsstream"
@@ -17,6 +18,7 @@ func main() {
 	key := flag.String("key", "", "path to TLS key")
 	serverID := flag.String("server-id", "", "16-byte hex server id")
 	serverStaticPrivB64 := flag.String("server-static-priv", "", "base64 x25519 private key")
+	bench := flag.Bool("bench", false, "enable benchmark mode")
 	flag.Parse()
 
 	if *cert == "" || *key == "" {
@@ -61,26 +63,55 @@ func main() {
 				log.Printf("handshake failed: %v", err)
 				return
 			}
-			// Read one encrypted frame and respond with a fixed reply.
-			wire, err := core.ReadMsg(conn)
-			if err != nil {
-				log.Printf("read frame: %v", err)
-				return
-			}
-			pt, err := sess.DecryptFrame(0x00, wire)
-			if err != nil {
-				log.Printf("decrypt: %v", err)
-				return
-			}
-			log.Printf("recv: %s", string(pt))
-			respWire, err := sess.EncryptFrame(0x01, core.MsgTypeData, []byte("pong"))
-			if err != nil {
-				log.Printf("encrypt: %v", err)
-				return
-			}
-			if err := core.WriteMsg(conn, respWire); err != nil {
-				log.Printf("write: %v", err)
-				return
+			if *bench {
+				var total int
+				start := time.Now()
+				for {
+					wire, err := core.ReadMsg(conn)
+					if err != nil {
+						log.Printf("read frame: %v", err)
+						return
+					}
+					msgType, pt, err := sess.DecryptFrameWithType(0x00, wire)
+					if err != nil {
+						log.Printf("decrypt: %v", err)
+						return
+					}
+					if msgType == core.MsgTypeControl && string(pt) == "done" {
+						elapsed := time.Since(start)
+						log.Printf("bench recv bytes=%d duration=%s", total, elapsed)
+						respWire, err := sess.EncryptFrame(0x01, core.MsgTypeControl, []byte("ok"))
+						if err != nil {
+							log.Printf("encrypt: %v", err)
+							return
+						}
+						_ = core.WriteMsg(conn, respWire)
+						return
+					}
+					total += len(pt)
+				}
+			} else {
+				// Read one encrypted frame and respond with a fixed reply.
+				wire, err := core.ReadMsg(conn)
+				if err != nil {
+					log.Printf("read frame: %v", err)
+					return
+				}
+				_, pt, err := sess.DecryptFrameWithType(0x00, wire)
+				if err != nil {
+					log.Printf("decrypt: %v", err)
+					return
+				}
+				log.Printf("recv: %s", string(pt))
+				respWire, err := sess.EncryptFrame(0x01, core.MsgTypeData, []byte("pong"))
+				if err != nil {
+					log.Printf("encrypt: %v", err)
+					return
+				}
+				if err := core.WriteMsg(conn, respWire); err != nil {
+					log.Printf("write: %v", err)
+					return
+				}
 			}
 		}()
 	}

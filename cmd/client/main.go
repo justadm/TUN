@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"flag"
 	"log"
+	"strings"
 	"time"
 
 	"tun/internal/core"
@@ -17,6 +18,9 @@ func main() {
 	insecure := flag.Bool("insecure", true, "skip TLS verification (dev only)")
 	clientID := flag.String("client-id", "", "16-byte hex client id")
 	serverStaticPubB64 := flag.String("server-static-pub", "", "base64 x25519 public key")
+	bench := flag.Bool("bench", false, "benchmark mode")
+	benchBytes := flag.Int("bench-bytes", 100<<20, "total bytes to send in benchmark")
+	benchFrame := flag.Int("bench-frame", 16<<10, "frame payload size in benchmark")
 	flag.Parse()
 
 	if *clientID == "" || *serverStaticPubB64 == "" {
@@ -26,7 +30,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("client-id: %v", err)
 	}
-	serverPub, err := base64.StdEncoding.DecodeString(*serverStaticPubB64)
+	serverPub, err := base64.StdEncoding.DecodeString(strings.TrimSpace(*serverStaticPubB64))
 	if err != nil {
 		log.Fatalf("server-static-pub: %v", err)
 	}
@@ -44,22 +48,65 @@ func main() {
 	if err != nil {
 		log.Fatalf("handshake: %v", err)
 	}
-	wire, err := sess.EncryptFrame(0x00, core.MsgTypeData, []byte("ping"))
-	if err != nil {
-		log.Fatalf("encrypt: %v", err)
+	if *bench {
+		total := *benchBytes
+		frameSize := *benchFrame
+		if frameSize <= 0 {
+			frameSize = 16 << 10
+		}
+		payload := make([]byte, frameSize)
+		start := time.Now()
+		sent := 0
+		for sent < total {
+			if total-sent < frameSize {
+				payload = payload[:total-sent]
+			}
+			wire, err := sess.EncryptFrame(0x00, core.MsgTypeData, payload)
+			if err != nil {
+				log.Fatalf("encrypt: %v", err)
+			}
+			if err := core.WriteMsg(conn, wire); err != nil {
+				log.Fatalf("write: %v", err)
+			}
+			sent += len(payload)
+		}
+		doneWire, err := sess.EncryptFrame(0x00, core.MsgTypeControl, []byte("done"))
+		if err != nil {
+			log.Fatalf("encrypt: %v", err)
+		}
+		if err := core.WriteMsg(conn, doneWire); err != nil {
+			log.Fatalf("write: %v", err)
+		}
+		respWire, err := core.ReadMsg(conn)
+		if err != nil {
+			log.Fatalf("read: %v", err)
+		}
+		_, pt, err := sess.DecryptFrameWithType(0x01, respWire)
+		if err != nil {
+			log.Fatalf("decrypt: %v", err)
+		}
+		elapsed := time.Since(start)
+		mbps := float64(sent) / elapsed.Seconds() / (1024 * 1024)
+		log.Printf("bench recv: %s", string(pt))
+		log.Printf("bench sent bytes=%d duration=%s throughput=%.2f MiB/s", sent, elapsed, mbps)
+	} else {
+		wire, err := sess.EncryptFrame(0x00, core.MsgTypeData, []byte("ping"))
+		if err != nil {
+			log.Fatalf("encrypt: %v", err)
+		}
+		if err := core.WriteMsg(conn, wire); err != nil {
+			log.Fatalf("write: %v", err)
+		}
+		respWire, err := core.ReadMsg(conn)
+		if err != nil {
+			log.Fatalf("read: %v", err)
+		}
+		_, pt, err := sess.DecryptFrameWithType(0x01, respWire)
+		if err != nil {
+			log.Fatalf("decrypt: %v", err)
+		}
+		log.Printf("recv: %s", string(pt))
 	}
-	if err := core.WriteMsg(conn, wire); err != nil {
-		log.Fatalf("write: %v", err)
-	}
-	respWire, err := core.ReadMsg(conn)
-	if err != nil {
-		log.Fatalf("read: %v", err)
-	}
-	pt, err := sess.DecryptFrame(0x01, respWire)
-	if err != nil {
-		log.Fatalf("decrypt: %v", err)
-	}
-	log.Printf("recv: %s", string(pt))
 }
 
 func parseHex16(s string) ([16]byte, error) {
