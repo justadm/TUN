@@ -23,3 +23,6 @@
 
 # Project docs (local notes)
 /.docs/
+
+# Dev artifacts
+/.dev/

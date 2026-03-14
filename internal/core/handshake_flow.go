@@ -56,6 +56,10 @@ func ValidateServerHello(s *ServerHelloBody, aeadPref, kdfPref uint8) bool {
 	return true
 }
 
+const (
+	KDFHKDFSHA256 = 1
+)
+
 // Helpers for ID parsing.
 func ParseID(b []byte) [16]byte {
 	var id [16]byte
