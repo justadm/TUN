@@ -2,19 +2,20 @@ package core
 
 import (
 	"crypto/ecdh"
+	"crypto/rand"
 	"testing"
 )
 
 func TestDeriveKeysClientServerMatch(t *testing.T) {
 	curve := ecdh.X25519()
 
-	serverStaticPriv, _ := curve.GenerateKey(nil)
+	serverStaticPriv, _ := curve.GenerateKey(rand.Reader)
 	serverStaticPub := serverStaticPriv.PublicKey().Bytes()
 
-	clientEphPriv, _ := curve.GenerateKey(nil)
+	clientEphPriv, _ := curve.GenerateKey(rand.Reader)
 	clientEphPub := clientEphPriv.PublicKey().Bytes()
 
-	serverEphPriv, _ := curve.GenerateKey(nil)
+	serverEphPriv, _ := curve.GenerateKey(rand.Reader)
 	serverEphPub := serverEphPriv.PublicKey().Bytes()
 
 	clientHello := []byte("client-hello")
