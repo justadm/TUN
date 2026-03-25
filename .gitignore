@@ -26,3 +26,9 @@
 
 # Dev artifacts
 /.dev/
+
+# Local web template
+/.local/cybershield/
+
+# Local web staging
+/.local/jstun-web/
