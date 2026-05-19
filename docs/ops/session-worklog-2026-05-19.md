@@ -135,7 +135,7 @@ git log --oneline -5
 | `docs/support-bundle-data-classification.md` (draft) | done |
 | MemLayer project `TUN` + 4 memory entries | done (`479795e9-8060-4717-8180-c0e6adba75bf`) |
 | Все `rg` → `grep` в `scripts/*.sh` | done |
-| Commit + push | pending |
+| Commit + push | done (`2f0b173`) |
 
 ## Следующий шаг (человек / агент)
 
