@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "project_name": "TUN",
+  "project_root": "/Users/just/projects/TUN",
+  "preferred_url": "http://127.0.0.1:18100",
+  "local_fallback_url": "https://memlayer.loc/api",
+  "human_preferred_url": "https://memlayer.loc/api",
+  "existing_entry_mode": "update",
+  "read_before_write": true,
+  "recommended_search_mode": "hybrid",
+  "recommended_memory_types": [
+    "decision",
+    "constraint",
+    "risk",
+    "artifact",
+    "task",
+    "note",
+    "event"
+  ]
+}

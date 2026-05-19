@@ -1,0 +1,58 @@
+[Unit]
+Description=Tun Runtime Server (systemd runner)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+NotifyAccess=main
+Restart=on-failure
+RestartSec=3s
+Environment=GOMAXPROCS=2
+EnvironmentFile=-/etc/tun/runtime-server.env
+RuntimeDirectory=tun
+LogsDirectory=tun
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+ReadWritePaths=/var/log/tun /etc/tun
+ExecStartPre=/usr/local/bin/runtime-preflight \
+  -tun-name tun0 \
+  -tun-mtu=${TUN_MTU} \
+  -tun-addresses=${TUN_ADDRESSES} \
+  -tun-routes=${TUN_ROUTES} \
+  -tun-config-mode=${TUN_CONFIG_MODE} \
+  -tun-cleanup-on-close=${TUN_CLEANUP_ON_CLOSE}
+ExecStart=/usr/local/bin/runtime-server-systemd \
+  -addr :8443 \
+  -cert /etc/tun/tls_cert.pem \
+  -key /etc/tun/tls_key.pem \
+  -server-id=${TUN_SERVER_ID} \
+  -server-static-priv=${TUN_SERVER_STATIC_PRIV_B64} \
+  -tun-name tun0 \
+  -tun-mtu=${TUN_MTU} \
+  -tun-addresses=${TUN_ADDRESSES} \
+  -tun-routes=${TUN_ROUTES} \
+  -tun-config-mode=${TUN_CONFIG_MODE} \
+  -tun-cleanup-on-close=${TUN_CLEANUP_ON_CLOSE} \
+  -health-addr 127.0.0.1:18081 \
+  -support-bundle-out /var/log/tun/support-bundle.json \
+  -support-signing-key-file=${TUN_SUPPORT_SIGNING_KEY_FILE} \
+  -support-signing-key-id=${TUN_SUPPORT_SIGNING_KEY_ID} \
+  -support-ring=${TUN_DEPLOY_RING} \
+  -notify true
+
+[Install]
+WantedBy=multi-user.target

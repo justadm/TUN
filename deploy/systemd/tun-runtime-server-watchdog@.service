@@ -1,0 +1,9 @@
+[Unit]
+Description=Tun Runtime Server Watchdog (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tun-runtime-link-watchdog.sh --role server --instance %i
+

@@ -1,0 +1,12 @@
+[Unit]
+Description=Tun Runtime Server Watchdog Timer (%i)
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=30s
+Unit=tun-runtime-server-watchdog@%i.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+

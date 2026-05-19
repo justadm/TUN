@@ -1,0 +1,14 @@
+[Unit]
+Description=JsTun Shadow Read Tunnel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/wireguard/wg-portal.env
+ExecStart=/bin/sh -lc 'mkdir -p /var/lib/wg-portal && touch /var/lib/wg-portal/shadow_known_hosts && exec ${JSTUN_READ_SHADOW_TUNNEL_SSH_BIN:-/usr/bin/ssh} -NT -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/var/lib/wg-portal/shadow_known_hosts ${JSTUN_READ_SHADOW_TUNNEL_IDENTITY_FILE:+-i ${JSTUN_READ_SHADOW_TUNNEL_IDENTITY_FILE}} -p ${JSTUN_READ_SHADOW_TUNNEL_SSH_PORT:-65022} -L 127.0.0.1:${JSTUN_READ_SHADOW_TUNNEL_LOCAL_PORT:-18191}:127.0.0.1:${JSTUN_READ_SHADOW_TUNNEL_TARGET_PORT:-18190} ${JSTUN_READ_SHADOW_TUNNEL_TARGET_HOST:-user@91.221.109.60}'
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

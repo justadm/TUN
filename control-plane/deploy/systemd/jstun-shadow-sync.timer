@@ -1,0 +1,11 @@
+[Unit]
+Description=Run JsTun Shadow Sync Push every minute
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=60s
+Unit=jstun-shadow-sync.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

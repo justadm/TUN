@@ -1,0 +1,18 @@
+[Unit]
+Description=JsTun Shadow PostgreSQL
+After=network.target
+
+[Service]
+Type=forking
+User=postgres
+Group=postgres
+Environment=PGDATA=/var/lib/jstun-shadow/postgres
+ExecStart=/usr/lib/postgresql/16/bin/pg_ctl -D ${PGDATA} -l /var/lib/jstun-shadow/postgres/server.log start
+ExecStop=/usr/lib/postgresql/16/bin/pg_ctl -D ${PGDATA} stop
+ExecReload=/usr/lib/postgresql/16/bin/pg_ctl -D ${PGDATA} reload
+PIDFile=/var/lib/jstun-shadow/postgres/postmaster.pid
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

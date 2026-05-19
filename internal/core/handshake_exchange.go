@@ -5,11 +5,40 @@ import (
 	"crypto/rand"
 	"errors"
 	"io"
+	"time"
 )
 
 var (
 	ErrHandshake = errors.New("handshake failed")
 )
+
+type deadlineSetter interface {
+	SetDeadline(time.Time) error
+}
+
+var (
+	HandshakeDeadline          = 8 * time.Second
+	serverClientHelloReplaySet = newClientHelloReplayCache(defaultHandshakeReplayTTL, defaultHandshakeReplayCapacity)
+)
+
+type ClientHandshakeOptions struct {
+	Plain            bool
+	ExpectedServerID *[16]byte
+}
+
+func applyHandshakeDeadline(rw io.ReadWriter) func() {
+	if HandshakeDeadline <= 0 {
+		return func() {}
+	}
+	ds, ok := rw.(deadlineSetter)
+	if !ok {
+		return func() {}
+	}
+	_ = ds.SetDeadline(time.Now().Add(HandshakeDeadline))
+	return func() {
+		_ = ds.SetDeadline(time.Time{})
+	}
+}
 
 // ClientHandshake performs a basic client-side handshake over a stream.
 func ClientHandshake(rw io.ReadWriter, clientID [16]byte, serverStaticPub []byte) (*Session, error) {
@@ -17,6 +46,13 @@ func ClientHandshake(rw io.ReadWriter, clientID [16]byte, serverStaticPub []byte
 }
 
 func ClientHandshakeWithOptions(rw io.ReadWriter, clientID [16]byte, serverStaticPub []byte, plain bool) (*Session, error) {
+	return ClientHandshakeWithConfig(rw, clientID, serverStaticPub, ClientHandshakeOptions{Plain: plain})
+}
+
+func ClientHandshakeWithConfig(rw io.ReadWriter, clientID [16]byte, serverStaticPub []byte, opts ClientHandshakeOptions) (*Session, error) {
+	clearDeadline := applyHandshakeDeadline(rw)
+	defer clearDeadline()
+
 	curve := ecdh.X25519()
 	clientEphPriv, err := curve.GenerateKey(rand.Reader)
 	if err != nil {
@@ -29,14 +65,20 @@ func ClientHandshakeWithOptions(rw io.ReadWriter, clientID [16]byte, serverStati
 	if err != nil {
 		return nil, err
 	}
-	chBodyBytes, _ := chBody.MarshalBinary()
+	chBodyBytes, err := chBody.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
 	chMsg := HandshakeMessage{
 		Type:    HSTypeClientHello,
 		Version: VersionV1,
 		Flags:   0,
 		Body:    chBodyBytes,
 	}
-	chWire, _ := chMsg.MarshalBinary()
+	chWire, err := chMsg.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
 	if err := WriteMsg(rw, chWire); err != nil {
 		return nil, err
 	}
@@ -59,13 +101,16 @@ func ClientHandshakeWithOptions(rw io.ReadWriter, clientID [16]byte, serverStati
 	if !ValidateServerHello(&shBody, chBody.AEADPref, chBody.KDFPref) {
 		return nil, ErrBadHello
 	}
+	if opts.ExpectedServerID != nil && shBody.ServerID != *opts.ExpectedServerID {
+		return nil, ErrServerIDMismatch
+	}
 
 	kc2s, ks2c, err := DeriveKeysClient(serverStaticPub, clientEphPriv, shBody.ServerEphemeral[:], chWire, resp)
 	if err != nil {
 		return nil, err
 	}
 	sess := NewSession(AEADChaCha20Poly1305, kc2s, ks2c)
-	sess.Plain = plain
+	sess.Plain = opts.Plain
 	return sess, nil
 }
 
@@ -75,6 +120,9 @@ func ServerHandshake(rw io.ReadWriter, serverID [16]byte, serverStaticPriv *ecdh
 }
 
 func ServerHandshakeWithOptions(rw io.ReadWriter, serverID [16]byte, serverStaticPriv *ecdh.PrivateKey, plain bool) (*Session, error) {
+	clearDeadline := applyHandshakeDeadline(rw)
+	defer clearDeadline()
+
 	req, err := ReadMsg(rw)
 	if err != nil {
 		return nil, err
@@ -93,6 +141,9 @@ func ServerHandshakeWithOptions(rw io.ReadWriter, serverID [16]byte, serverStati
 	if !ValidateClientHello(&chBody) {
 		return nil, ErrBadHello
 	}
+	if serverClientHelloReplaySet.seenOrAdd(chBody.ClientNonce, time.Now()) {
+		return nil, ErrHandshakeReplay
+	}
 	if chBody.AEADPref != 1 || chBody.KDFPref != KDFHKDFSHA256 {
 		return nil, ErrUnsupportedAlgo
 	}
@@ -108,14 +159,20 @@ func ServerHandshakeWithOptions(rw io.ReadWriter, serverID [16]byte, serverStati
 	if err != nil {
 		return nil, err
 	}
-	shBodyBytes, _ := shBody.MarshalBinary()
+	shBodyBytes, err := shBody.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
 	shMsg := HandshakeMessage{
 		Type:    HSTypeServerHello,
 		Version: VersionV1,
 		Flags:   0,
 		Body:    shBodyBytes,
 	}
-	shWire, _ := shMsg.MarshalBinary()
+	shWire, err := shMsg.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
 	if err := WriteMsg(rw, shWire); err != nil {
 		return nil, err
 	}

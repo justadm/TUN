@@ -24,15 +24,47 @@ func NewReplayWindow(size uint64) *ReplayWindow {
 
 // Accept returns true if seq is new and within acceptable window.
 func (w *ReplayWindow) Accept(seq uint64) bool {
+	if !w.CanAccept(seq) {
+		return false
+	}
+	w.Mark(seq)
+	return true
+}
+
+// CanAccept reports whether seq is new and within acceptable window
+// without mutating the replay window.
+func (w *ReplayWindow) CanAccept(seq uint64) bool {
 	if seq == 0 {
 		return false
 	}
 	if w.maxSeq == 0 {
-		w.maxSeq = seq
-		w.set(seq)
 		return true
 	}
 
+	if seq > w.maxSeq {
+		return true
+	}
+
+	// seq <= maxSeq
+	if w.maxSeq-seq >= w.windowSize {
+		return false
+	}
+	if w.isSet(seq) {
+		return false
+	}
+	return true
+}
+
+// Mark records seq as seen in the replay window.
+func (w *ReplayWindow) Mark(seq uint64) {
+	if seq == 0 {
+		return
+	}
+	if w.maxSeq == 0 {
+		w.maxSeq = seq
+		w.set(seq)
+		return
+	}
 	if seq > w.maxSeq {
 		delta := seq - w.maxSeq
 		if delta >= w.windowSize {
@@ -45,18 +77,10 @@ func (w *ReplayWindow) Accept(seq uint64) bool {
 		}
 		w.maxSeq = seq
 		w.set(seq)
-		return true
+		return
 	}
-
-	// seq <= maxSeq
-	if w.maxSeq-seq >= w.windowSize {
-		return false
-	}
-	if w.isSet(seq) {
-		return false
-	}
+	// seq <= maxSeq; caller should have validated CanAccept.
 	w.set(seq)
-	return true
 }
 
 func (w *ReplayWindow) bitIndex(seq uint64) (word int, bit uint) {

@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: tun-monitoring-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${MONITORING_PG_DB:-monitoring}
+      POSTGRES_USER: ${MONITORING_PG_USER:-monitoring}
+      POSTGRES_PASSWORD: ${MONITORING_PG_PASSWORD:-monitoring}
+    ports:
+      - "15433:5432"
+    volumes:
+      - monitoring_pg_data:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d:ro
+
+  monitoring-api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    container_name: tun-monitoring-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "18070:18070"
+    volumes:
+      - ./services:/app/services:ro
+      - ./config:/app/config:ro
+      - ./docs:/app/docs:ro
+    depends_on:
+      - postgres
+
+  monitoring-ingestor:
+    build:
+      context: .
+      dockerfile: services/ingestor/Dockerfile
+    container_name: tun-monitoring-ingestor
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "18071:18071"
+    volumes:
+      - ./services:/app/services:ro
+      - ./config:/app/config:ro
+      - ./docs:/app/docs:ro
+    depends_on:
+      - postgres
+
+volumes:
+  monitoring_pg_data:
+

@@ -1,0 +1,17 @@
+[Unit]
+Description=JsTun Shadow Control API
+After=network-online.target jstun-shadow-postgres.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+EnvironmentFile=/etc/jstun-shadow/jstun-shadow.env
+WorkingDirectory=/opt/jstun-shadow
+ExecStart=/usr/bin/python3 /opt/jstun-shadow/control-api/wg_control_api_server.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+[Unit]
+Description=JsTun Shadow Portal HTTP
+After=network-online.target jstun-shadow-control-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+EnvironmentFile=/etc/jstun-shadow/jstun-shadow.env
+WorkingDirectory=/opt/jstun-shadow
+ExecStart=/usr/bin/python3 /opt/jstun-shadow/portal-http/wg_portal_http.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

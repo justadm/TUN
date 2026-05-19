@@ -41,3 +41,24 @@ func TestFrameLengthMismatch(t *testing.T) {
 		t.Fatalf("expected ErrLengthMismatch, got %v", err)
 	}
 }
+
+func TestFrameRejectsInvalidMsgType(t *testing.T) {
+	b := make([]byte, FrameHeaderSize)
+	b[0] = VersionV1
+	b[1] = 0xFF
+	var f Frame
+	if err := f.UnmarshalBinary(b); err != ErrInvalidMsgType {
+		t.Fatalf("expected ErrInvalidMsgType, got %v", err)
+	}
+}
+
+func TestFrameRejectsNonZeroReserved(t *testing.T) {
+	b := make([]byte, FrameHeaderSize)
+	b[0] = VersionV1
+	b[1] = MsgTypeData
+	b[7] = 1
+	var f Frame
+	if err := f.UnmarshalBinary(b); err != ErrNonZeroReserved {
+		t.Fatalf("expected ErrNonZeroReserved, got %v", err)
+	}
+}

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tun.local/contracts/security_signal_contract_v1.json",
+  "title": "TUN Security Signal Contract",
+  "description": "Unified contract for JsTun clients and TUN runtime-helper security ingestion/evaluation.",
+  "type": "object",
+  "required": ["contractVersion", "evaluateRequest", "evaluateResponse"],
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "2026-04-13"
+    },
+    "evaluateRequest": {
+      "type": "object",
+      "required": ["tenantID", "deviceID"],
+      "properties": {
+        "tenantID": { "type": "string", "minLength": 1 },
+        "deviceID": { "type": "string", "minLength": 1 },
+        "clientIP": { "type": "string" },
+        "asn": { "type": "string" },
+        "geoipDetected": { "type": "boolean" },
+        "directDetected": { "type": "boolean" },
+        "indirectDetected": { "type": "boolean" },
+        "hostingRisk": { "type": "boolean" },
+        "torRisk": { "type": "boolean" },
+        "vpnReputationRisk": { "type": "boolean" },
+        "corporateWhitelisted": { "type": "boolean" },
+        "serverCountry": { "type": "string" },
+        "clientCountry": { "type": "string" },
+        "clientRegion": { "type": "string" },
+        "icloudPrivateRelay": { "type": "boolean" },
+        "roamingLikely": { "type": "boolean" },
+        "repeatOffenseCount": { "type": "integer", "minimum": 0 },
+        "signalTimestamp": { "type": "integer" },
+        "signalNonce": { "type": "string" },
+        "signalSignature": { "type": "string" },
+        "reputationIP": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "evaluateResponse": {
+      "type": "object",
+      "required": ["ok", "decision", "protectionPlan", "riskScore", "reasons"],
+      "properties": {
+        "ok": { "type": "boolean" },
+        "decision": { "type": "string", "enum": ["not_detected", "additional_check", "detected"] },
+        "protectionPlan": { "type": "array", "items": { "type": "string" } },
+        "riskScore": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "reasons": { "type": "array", "items": { "type": "string" } },
+        "policyProfile": { "type": "string", "enum": ["strict", "balanced", "permissive"] },
+        "hardBlock": { "type": "boolean" },
+        "provenance": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ingestRequest": {
+      "type": "object",
+      "required": ["signal"],
+      "properties": {
+        "signal": { "$ref": "#/properties/evaluateRequest" },
+        "evaluate": { "type": "boolean" },
+        "requireSignature": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "ingestResponse": {
+      "type": "object",
+      "required": ["ok", "ingestedAt", "tenantID", "evaluated"],
+      "properties": {
+        "ok": { "type": "boolean" },
+        "ingestedAt": { "type": "string", "format": "date-time" },
+        "tenantID": { "type": "string" },
+        "deviceID": { "type": "string" },
+        "evaluated": { "type": "boolean" },
+        "result": { "$ref": "#/properties/evaluateResponse" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

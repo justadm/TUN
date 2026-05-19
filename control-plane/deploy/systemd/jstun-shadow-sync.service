@@ -1,0 +1,9 @@
+[Unit]
+Description=JsTun Shadow Sync Push
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/wireguard/wg-portal.env
+ExecStart=/usr/local/bin/jstun_shadow_sync_push.sh

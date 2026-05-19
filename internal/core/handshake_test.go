@@ -17,6 +17,21 @@ func TestHandshakeMessageRoundTrip(t *testing.T) {
 	}
 }
 
+func TestHandshakeMessageRejectsInvalidType(t *testing.T) {
+	m := &HandshakeMessage{Type: 0xFF, Version: VersionV1, Flags: 0, Body: []byte{0x01}}
+	if _, err := m.MarshalBinary(); err == nil {
+		t.Fatalf("expected marshal error for invalid type")
+	}
+}
+
+func TestHandshakeMessageRejectsNonZeroFlags(t *testing.T) {
+	raw := []byte{HSTypeClientHello, VersionV1, 0x00, 0x01}
+	var m HandshakeMessage
+	if err := m.UnmarshalBinary(raw); err != ErrNonZeroReserved {
+		t.Fatalf("expected ErrNonZeroReserved, got %v", err)
+	}
+}
+
 func TestClientHelloBodyRoundTrip(t *testing.T) {
 	var c ClientHelloBody
 	for i := 0; i < 16; i++ {
@@ -56,5 +71,19 @@ func TestServerHelloBodyRoundTrip(t *testing.T) {
 	}
 	if parsed.AEADSelected != s.AEADSelected || parsed.KDFSelected != s.KDFSelected {
 		t.Fatalf("prefs mismatch")
+	}
+}
+
+func TestClientHelloBodyRejectsZeroIdentity(t *testing.T) {
+	var c ClientHelloBody
+	for i := 0; i < 32; i++ {
+		c.ClientEphemeral[i] = byte(i + 1)
+	}
+	c.AEADPref = 1
+	c.KDFPref = KDFHKDFSHA256
+	b, _ := c.MarshalBinary()
+	var parsed ClientHelloBody
+	if err := parsed.UnmarshalBinary(b); err != ErrBadHello {
+		t.Fatalf("expected ErrBadHello, got %v", err)
 	}
 }

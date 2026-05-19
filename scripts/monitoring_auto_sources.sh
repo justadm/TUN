@@ -42,6 +42,7 @@ aliases=("${uniq_aliases[@]}")
 
 base_port="${MONITORING_AUTO_BASE_PORT:-18111}"
 next_port="${base_port}"
+docker_host="${MONITORING_DOCKER_HOST:-172.17.0.1}"
 
 disc_urls=()
 disc_tokens=()
@@ -179,15 +180,15 @@ for host in "${aliases[@]}"; do
   fi
 
   if [[ ${edges_ok} -eq 1 ]]; then
-    disc_urls+=("http://host.docker.internal:${local_port}/v1/edges")
+    disc_urls+=("http://${docker_host}:${local_port}/v1/edges")
     disc_tokens+=("${token}")
   fi
   if [[ ${uplinks_ok} -eq 1 ]]; then
-    disc_urls+=("http://host.docker.internal:${local_port}/v1/uplinks")
+    disc_urls+=("http://${docker_host}:${local_port}/v1/uplinks")
     disc_tokens+=("${token}")
   fi
   if [[ ${peers_ok} -eq 1 ]]; then
-    peer_urls+=("http://host.docker.internal:${local_port}/v1/peers")
+    peer_urls+=("http://${docker_host}:${local_port}/v1/peers")
     peer_tokens+=("${token}")
   fi
 

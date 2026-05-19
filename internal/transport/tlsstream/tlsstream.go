@@ -54,3 +54,7 @@ func (l *Listener) Accept(ctx context.Context) (transport.Stream, error) {
 func (l *Listener) Close() error {
 	return l.ln.Close()
 }
+
+func (l *Listener) Addr() net.Addr {
+	return l.ln.Addr()
+}

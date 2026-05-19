@@ -1,0 +1,36 @@
+[Unit]
+Description=Tun Runtime Helper API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=2s
+Environment=GOMAXPROCS=2
+EnvironmentFile=-/etc/tun/runtime-helper.env
+RuntimeDirectory=tun
+StateDirectory=tun
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+ReadWritePaths=/run/tun /var/lib/tun /etc/tun
+ExecStart=/usr/local/bin/runtime-helper \
+  -unix-socket ${TUN_HELPER_SOCKET} \
+  -state-file ${TUN_HELPER_STATE_FILE} \
+  -auth-token-file ${TUN_HELPER_AUTH_TOKEN_FILE}
+
+[Install]
+WantedBy=multi-user.target

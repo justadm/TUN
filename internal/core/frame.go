@@ -15,8 +15,8 @@ const (
 )
 
 var (
-	ErrShortFrame   = errors.New("frame too short")
-	ErrLengthMismatch = errors.New("payload length mismatch")
+	ErrShortFrame         = errors.New("frame too short")
+	ErrLengthMismatch     = errors.New("payload length mismatch")
 	ErrUnsupportedVersion = errors.New("unsupported version")
 )
 
@@ -56,8 +56,14 @@ func (f *Frame) UnmarshalBinary(b []byte) error {
 		return ErrUnsupportedVersion
 	}
 	f.MsgType = b[1]
+	if !isValidMsgType(f.MsgType) {
+		return ErrInvalidMsgType
+	}
 	f.Flags = binary.BigEndian.Uint16(b[2:4])
 	f.Reserved = binary.BigEndian.Uint32(b[4:8])
+	if f.Reserved != 0 {
+		return ErrNonZeroReserved
+	}
 	f.Seq = binary.BigEndian.Uint64(b[8:16])
 	f.PayloadLen = binary.BigEndian.Uint32(b[16:20])
 
@@ -71,4 +77,13 @@ func (f *Frame) UnmarshalBinary(b []byte) error {
 		f.Payload = nil
 	}
 	return nil
+}
+
+func isValidMsgType(v uint8) bool {
+	switch v {
+	case MsgTypeData, MsgTypeControl, MsgTypeHandshake:
+		return true
+	default:
+		return false
+	}
 }

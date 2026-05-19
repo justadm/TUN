@@ -1,0 +1,48 @@
+[Unit]
+Description=Tun Runtime Helper Bridge Autopilot Daemon
+After=network-online.target tun-runtime-helper.service
+Wants=network-online.target
+Requires=tun-runtime-helper.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=3s
+Environment=GOMAXPROCS=2
+EnvironmentFile=-/etc/tun/runtime-helper-autopilot.env
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadOnlyPaths=/etc/tun
+ExecStart=/usr/local/bin/runtime-helperctl \
+  -action bridge.autopilot.daemon \
+  -unix-socket ${TUN_HELPER_SOCKET} \
+  -token-file ${TUN_HELPER_AUTH_TOKEN_FILE} \
+  -payload-file ${TUN_HELPER_BOOTSTRAP_FILE} \
+  -lease-owner ${TUN_HELPER_LEASE_OWNER} \
+  -lease-ttl ${TUN_HELPER_LEASE_TTL} \
+  -timeout ${TUN_HELPER_TIMEOUT} \
+  -bridge-autopilot-max-steps ${TUN_HELPER_AUTOPILOT_MAX_STEPS} \
+  -bridge-autopilot-allow-restart=${TUN_HELPER_AUTOPILOT_ALLOW_RESTART} \
+  -bridge-autopilot-interval ${TUN_HELPER_AUTOPILOT_INTERVAL} \
+  -bridge-autopilot-duration ${TUN_HELPER_AUTOPILOT_DURATION} \
+  -bridge-autopilot-continue-on-error=${TUN_HELPER_AUTOPILOT_CONTINUE_ON_ERROR} \
+  -bridge-reconcile-ensure-lease=true \
+  -bridge-wait=${TUN_HELPER_BRIDGE_WAIT} \
+  -wait-state ${TUN_HELPER_WAIT_STATE} \
+  -wait-timeout ${TUN_HELPER_WAIT_TIMEOUT}
+
+[Install]
+WantedBy=multi-user.target

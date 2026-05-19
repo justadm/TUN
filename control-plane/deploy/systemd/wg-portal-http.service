@@ -1,0 +1,19 @@
+# /etc/systemd/system/wg-portal-http.service
+[Unit]
+Description=WG Portal HTTP service
+After=network-online.target wg-quick@wg0.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/wireguard/wg-portal.env
+Environment=WG_PORTAL_HTTP_HOST=10.200.0.4
+Environment=WG_PORTAL_HTTP_PORT=18090
+Environment=WG_PORTAL_CLI=/usr/local/bin/wg_portal.py
+ExecStart=/usr/bin/python3 /usr/local/bin/wg_portal_http.py
+Restart=on-failure
+RestartSec=2
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -22,6 +22,15 @@ type HandshakeMessage struct {
 }
 
 func (m *HandshakeMessage) MarshalBinary() ([]byte, error) {
+	if !isValidHandshakeType(m.Type) {
+		return nil, ErrInvalidHandshake
+	}
+	if m.Version != VersionV1 {
+		return nil, ErrInvalidHandshake
+	}
+	if m.Flags != 0 {
+		return nil, ErrNonZeroReserved
+	}
 	buf := make([]byte, 4+len(m.Body))
 	buf[0] = m.Type
 	buf[1] = m.Version
@@ -36,7 +45,16 @@ func (m *HandshakeMessage) UnmarshalBinary(b []byte) error {
 	}
 	m.Type = b[0]
 	m.Version = b[1]
+	if !isValidHandshakeType(m.Type) {
+		return ErrInvalidHandshake
+	}
+	if m.Version != VersionV1 {
+		return ErrInvalidHandshake
+	}
 	m.Flags = binary.BigEndian.Uint16(b[2:4])
+	if m.Flags != 0 {
+		return ErrNonZeroReserved
+	}
 	m.Body = append([]byte{}, b[4:]...)
 	return nil
 }
@@ -72,6 +90,9 @@ func (c *ClientHelloBody) UnmarshalBinary(b []byte) error {
 	c.AEADPref = b[64]
 	c.KDFPref = b[65]
 	c.Reserved = binary.BigEndian.Uint16(b[66:68])
+	if !ValidateClientHello(c) {
+		return ErrBadHello
+	}
 	return nil
 }
 
@@ -107,4 +128,8 @@ func (s *ServerHelloBody) UnmarshalBinary(b []byte) error {
 	s.KDFSelected = b[65]
 	s.Reserved = binary.BigEndian.Uint16(b[66:68])
 	return nil
+}
+
+func isValidHandshakeType(v uint8) bool {
+	return v == HSTypeClientHello || v == HSTypeServerHello
 }

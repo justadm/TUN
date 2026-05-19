@@ -1,0 +1,14 @@
+[Unit]
+Description=JsTun Shadow Write DB Tunnel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/wireguard/wg-portal.env
+ExecStart=/bin/sh -lc 'mkdir -p /var/lib/wg-portal && touch /var/lib/wg-portal/shadow_db_known_hosts && exec ${JSTUN_WRITE_SHADOW_DB_TUNNEL_SSH_BIN:-/usr/bin/ssh} -NT -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/var/lib/wg-portal/shadow_db_known_hosts ${JSTUN_WRITE_SHADOW_DB_TUNNEL_IDENTITY_FILE:+-i ${JSTUN_WRITE_SHADOW_DB_TUNNEL_IDENTITY_FILE}} -p ${JSTUN_WRITE_SHADOW_DB_TUNNEL_SSH_PORT:-65022} -L 127.0.0.1:${JSTUN_WRITE_SHADOW_DB_TUNNEL_LOCAL_PORT:-15433}:127.0.0.1:${JSTUN_WRITE_SHADOW_DB_TUNNEL_TARGET_PORT:-15432} ${JSTUN_WRITE_SHADOW_DB_TUNNEL_TARGET_HOST:-user@91.221.109.60}'
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

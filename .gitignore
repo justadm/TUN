@@ -32,3 +32,19 @@
 
 # Local web staging
 /.local/jstun-web/
+
+# Local caches and gate outputs
+/.tmp/
+/artifacts/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Secrets (keep *.example)
+.env
+.env.*
+!.env.example
+!.env.*.example
+/monitoring/.env

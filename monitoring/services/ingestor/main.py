@@ -201,6 +201,7 @@ def _derive_host(edge_id: str) -> str:
 
 def _discovery_endpoint_urls() -> list[str]:
     urls: list[str] = []
+    docker_host = _env("MONITORING_DOCKER_HOST", "172.17.0.1")
     csv_urls = _env("MONITORING_DISCOVERY_URLS", "")
     if csv_urls:
         for raw in csv_urls.split(","):
@@ -210,9 +211,9 @@ def _discovery_endpoint_urls() -> list[str]:
     edges_url = _env("MONITORING_DISCOVERY_EDGES_URL", "")
     uplinks_url = _env("MONITORING_DISCOVERY_UPLINKS_URL", "")
     if not edges_url and not csv_urls:
-        edges_url = "http://host.docker.internal:18110/v1/edges"
+        edges_url = f"http://{docker_host}:18110/v1/edges"
     if not uplinks_url and not csv_urls:
-        uplinks_url = "http://host.docker.internal:18110/v1/uplinks"
+        uplinks_url = f"http://{docker_host}:18110/v1/uplinks"
     if edges_url:
         urls.append(edges_url)
         if not uplinks_url and "/edges" in edges_url:
@@ -250,7 +251,8 @@ def _control_peers_specs() -> list[tuple[str, dict[str, str]]]:
         return []
     urls = _csv_list(_env("MONITORING_CONTROL_PEERS_URLS", ""))
     if not urls:
-        single_url = _env("MONITORING_CONTROL_PEERS_URL", "http://host.docker.internal:18110/v1/peers")
+        docker_host = _env("MONITORING_DOCKER_HOST", "172.17.0.1")
+        single_url = _env("MONITORING_CONTROL_PEERS_URL", f"http://{docker_host}:18110/v1/peers")
         if single_url:
             urls = [single_url]
     if not urls:

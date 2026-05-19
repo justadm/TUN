@@ -1,0 +1,25 @@
+{
+  "nodes": [
+    {
+      "node_id": "fra-1",
+      "display_name": "FRA 1",
+      "role": "runtime",
+      "region": "fra",
+      "edge_id": "fra",
+      "host": "fra.local",
+      "helper_base_url": "http://fra.local:19090",
+      "helper_auth_ref": "env:fra_helper_token"
+    },
+    {
+      "node_id": "msk-1",
+      "display_name": "MSK 1",
+      "role": "gateway",
+      "region": "msk",
+      "edge_id": "msk",
+      "host": "msk.local",
+      "helper_base_url": "http://msk.local:19090",
+      "helper_auth_ref": "env:msk_helper_token"
+    }
+  ]
+}
+
