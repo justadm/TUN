@@ -209,7 +209,7 @@ if [[ "${tick_count}" -lt 1 ]]; then
   exit 1
 fi
 
-if ! rg -q '"run":' "${out_file}" || ! rg -q '"at":' "${out_file}" || ! rg -q '"autopilot":' "${out_file}"; then
+if ! grep -qF '"run":' "${out_file}" || ! grep -qF '"at":' "${out_file}" || ! grep -qF '"autopilot":' "${out_file}"; then
   echo "autopilot daemon output shape mismatch (missing run/at/autopilot)" >&2
   cat "${out_file}" >&2 || true
   exit 1

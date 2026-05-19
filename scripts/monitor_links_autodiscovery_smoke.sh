@@ -96,18 +96,18 @@ fi
 
 echo "[monitor-smoke] check schema"
 schema_json="$("${ctl[@]}" -action schema)"
-if ! printf '%s' "${schema_json}" | rg -q '"apiVersion":"v1"'; then
+if ! printf '%s' "${schema_json}" | grep -qF '"apiVersion":"v1"'; then
   echo "[monitor-smoke] schema apiVersion!=v1" >&2
   exit 1
 fi
-if ! printf '%s' "${schema_json}" | rg -q '/v1/helper/links/health.stream'; then
+if ! printf '%s' "${schema_json}" | grep -qF '/v1/helper/links/health.stream'; then
   echo "[monitor-smoke] schema does not advertise /v1/helper/links/health.stream" >&2
   exit 1
 fi
 
 echo "[monitor-smoke] check links inventory"
 links_json="$("${ctl[@]}" -action links)"
-if ! printf '%s' "${links_json}" | rg -q '"links"'; then
+if ! printf '%s' "${links_json}" | grep -qF '"links"'; then
   echo "[monitor-smoke] links response does not contain links field" >&2
   exit 1
 fi
@@ -123,16 +123,16 @@ echo "[monitor-smoke] stream links health"
   -links-health-retry-backoff-min "${retry_backoff_min}" \
   -links-health-retry-backoff-max "${retry_backoff_max}" > "${stream_file}"
 
-if ! rg -q '"stream":"links.health"' "${stream_file}"; then
+if ! grep -qF '"stream":"links.health"' "${stream_file}"; then
   echo "[monitor-smoke] stream output does not contain links.health envelope" >&2
   exit 1
 fi
-links_events_count="$(rg -c '"event":"links"' "${stream_file}")"
+links_events_count="$(grep -cF '"event":"links"' "${stream_file}" || true)"
 if (( links_events_count < min_links_events )); then
   echo "[monitor-smoke] expected at least ${min_links_events} links events, got ${links_events_count}" >&2
   exit 1
 fi
-if ! rg -q '"event":"done"' "${stream_file}"; then
+if ! grep -qF '"event":"done"' "${stream_file}"; then
   echo "[monitor-smoke] stream output has no done event" >&2
   exit 1
 fi

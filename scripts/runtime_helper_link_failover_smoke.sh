@@ -83,7 +83,7 @@ echo "[failover-smoke] response: ${out}"
 
 read_out="$("${ctl[@]}" -action link.read -link-id "${link_id}")"
 echo "[failover-smoke] link.read: ${read_out}"
-if ! printf '%s' "${read_out}" | rg -q "\"gatewayID\":\"${gateway_id}\""; then
+if ! printf '%s' "${read_out}" | grep -qF "\"gatewayID\":\"${gateway_id}\""; then
   echo "[failover-smoke] expected gatewayID=${gateway_id} in link.read output" >&2
   exit 1
 fi

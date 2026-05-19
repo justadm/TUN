@@ -7,6 +7,7 @@ Current working documentation for JsTun.
 - `docs/` is the canonical location for active product, app, API, rollout, and planning documents.
 - `docs/app/` contains client-application strategy, architecture, delivery plans, and working notes.
 - `docs/monitoring/` contains the active design package for tunnel monitoring and control.
+- `docs/ops/` contains session worklogs, decisions, backlog, and pilot checklists (canonical trace of agent/team work).
 - `tun-link-monitoring-control-2026-04-10.md` captures the proposed universal monitoring/control architecture for active `tun-rnd` links.
 - `tunnel-runtime-handoff-2026-04-10.md` is the handoff contract for the separate tunnel/runtime implementation bot.
 - `.docs/` is retained for legacy/internal artifacts, protocol-spec history, dated research notes, and existing references used by scripts or code.
