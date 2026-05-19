@@ -1605,6 +1605,13 @@ func TestBridgeStartupRejectsProfileBundleBootstrapMismatch(t *testing.T) {
 
 func TestBridgeStartupWithProfileBundleKeepsBundleAsAuthoritative(t *testing.T) {
 	manager := newHelperManager("")
+	manager.validateBootstrapFn = func(req ValidateBootstrapRequest) (ValidateBootstrapResponse, error) {
+		pb := req.ProfileBootstrap
+		if err := normalizeBootstrap(&pb); err != nil {
+			return ValidateBootstrapResponse{}, err
+		}
+		return ValidateBootstrapResponse{OK: true, Normalized: pb}, nil
+	}
 	manager.runFn = func(ctx context.Context, _ ProfileBootstrap, onEvent func(runtime.Event)) error {
 		onEvent(runtime.Event{
 			State:      runtime.StateEstablished,

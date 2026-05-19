@@ -1,6 +1,8 @@
 name: runtime-helper-gate
 
 on:
+  push:
+    branches: [ "main" ]
   pull_request:
     paths:
       - "cmd/runtime-helper/**"

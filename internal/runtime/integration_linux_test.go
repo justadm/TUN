@@ -38,7 +38,7 @@ func TestRunClientWithRealTunHarness(t *testing.T) {
 		return &noopStream{}, nil
 	}
 	handshake := func(_ transport.Stream) (*core.Session, error) {
-		return core.NewSession(core.AEADChaCha20Poly1305, bytes(0xAA, 32), bytes(0xBB, 32)), nil
+		return core.NewSession(core.AEADChaCha20Poly1305, repeatByte(0xAA, 32), repeatByte(0xBB, 32)), nil
 	}
 	runEngine := func(runCtx context.Context, dev tun.Device, _ transport.Stream, _ *core.Session, _ engine.Options) error {
 		defer dev.Close()
@@ -62,4 +62,12 @@ func TestRunClientWithRealTunHarness(t *testing.T) {
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("expected context canceled, got %v", err)
 	}
+}
+
+func repeatByte(b byte, n int) []byte {
+	out := make([]byte, n)
+	for i := range out {
+		out[i] = b
+	}
+	return out
 }

@@ -27,16 +27,26 @@ type File struct {
 	Vectors       []Vector `json:"vectors"`
 }
 
-// LoadFromRepo loads test-vectors.json from .docs/spec by walking up to go.mod.
+// LoadFromRepo loads AEAD test vectors from testdata (CI) or .docs/spec (local legacy path).
 func LoadFromRepo() (*File, error) {
 	root, err := findRepoRoot()
 	if err != nil {
 		return nil, err
 	}
-	path := filepath.Join(root, ".docs", "spec", "test-vectors.json")
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
+	candidates := []string{
+		filepath.Join(root, "internal", "testvectors", "testdata", "test-vectors.json"),
+		filepath.Join(root, ".docs", "spec", "test-vectors.json"),
+	}
+	var data []byte
+	var readErr error
+	for _, path := range candidates {
+		data, readErr = os.ReadFile(path)
+		if readErr == nil {
+			break
+		}
+	}
+	if readErr != nil {
+		return nil, readErr
 	}
 	var f File
 	if err := json.Unmarshal(data, &f); err != nil {

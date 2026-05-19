@@ -601,7 +601,8 @@ type helperManager struct {
 	security     securityState
 	profiles     *runtime.ProfileManager
 
-	runFn func(context.Context, ProfileBootstrap, func(runtime.Event)) error
+	runFn               func(context.Context, ProfileBootstrap, func(runtime.Event)) error
+	validateBootstrapFn func(ValidateBootstrapRequest) (ValidateBootstrapResponse, error)
 }
 
 type securityState struct {
@@ -740,6 +741,9 @@ func (m *helperManager) applyBootstrapWithOptions(req StartRequest, syncProfile 
 }
 
 func (m *helperManager) validateBootstrap(req ValidateBootstrapRequest) (ValidateBootstrapResponse, error) {
+	if m.validateBootstrapFn != nil {
+		return m.validateBootstrapFn(req)
+	}
 	pb := req.ProfileBootstrap
 	if err := normalizeBootstrap(&pb); err != nil {
 		return ValidateBootstrapResponse{}, err
