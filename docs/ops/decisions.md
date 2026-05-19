@@ -14,3 +14,5 @@
 | D-008 | — | Разделить Makefile targets `helper-*` / `tunrnd-*` | proposed |
 | D-009 | — | Опубликовать критичные runbook’и из `.docs/` в `docs/runbooks/` | proposed |
 | D-010 | — | Обязательный `-auth-token-file` даже для unix в production | proposed |
+| D-011 | 2026-05-19 | Pilot runtime-helper не на EDG/VRN/uplinks; mesh ещё running — только recon/decommission plan | accepted |
+| D-012 | 2026-05-19 | `bx_msk_d` / 158.160.254.197 не использовать; monitoring на `msk` = server-msk 85.239.44.49 | accepted |

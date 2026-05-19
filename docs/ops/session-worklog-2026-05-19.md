@@ -137,8 +137,29 @@ git log --oneline -5
 | Все `rg` → `grep` в `scripts/*.sh` | done |
 | Commit + push | done (`2f0b173`) |
 
+## Инфраструктурный осмотр SSH (2026-05-19)
+
+**Запрос оператора:** доступы есть на все алиасы; `bx_msk_d` снят; после падений WG — основной канал; на серверах живые клиенты — только осмотр.
+
+**Действие:** read-only SSH на `edg vrn ams fra nyc msk exe` (+ `spb`).
+
+**Отчёт:** [infra-recon-2026-05-19.md](./infra-recon-2026-05-19.md)
+
+**Ключевые выводы:**
+
+- **EDG:** production WG (control-api `127.0.0.1:18110`, portal, uplinks) + shadow tunnels; tun-rnd mesh **не running**; **runtime-helper нет**
+- **VRN:** shadow stack **active** + tun-rnd `server@ams|fra|nyc` **ещё running** (watchdog@nyc failed)
+- **AMS/FRA/NYC:** tun-rnd **clients** к spb/vrn **active** — mesh не снят
+- **MSK (`server-msk`):** monitoring docker 18070/18071; хвосты `/etc/tun`; не `bx_msk_d`
+- **SPB:** mesh servers + wg api 18110 — активный tun-rnd hub
+- **EXE:** вне контура (Bitrix)
+- **runtime-helper:** нигде не установлен
+
+**Решение D-011 (предложено):** pilot helper **не** на EDG/VRN/uplinks; tun-rnd decommission — отдельное окно после подтверждения оператора.
+
 ## Следующий шаг (человек / агент)
 
-1. Pilot на staging — [runtime-helper-pilot-checklist.md](./runtime-helper-pilot-checklist.md)
-2. MemLayer full reimport (`MEMLAYER.md`)
-3. Makefile split helper vs tunrnd (D-008)
+1. Оператор: подтвердить — tun-rnd mesh целевое состояние «off»?
+2. Pilot helper — отдельная staging VM или dev machine (см. recon)
+3. MemLayer full reimport (`MEMLAYER.md`)
+4. Makefile split helper vs tunrnd (D-008)

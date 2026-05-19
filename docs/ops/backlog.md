@@ -4,7 +4,8 @@
 
 ## P0 — сделать в ближайшие дни
 
-- [ ] **Pilot runtime-helper** — [runtime-helper-pilot-checklist.md](./runtime-helper-pilot-checklist.md) на staging
+- [ ] **Оператор:** подтвердить судьбу tun-rnd mesh (сейчас **active** на vrn/ams/fra/nyc/spb — см. [infra-recon-2026-05-19.md](./infra-recon-2026-05-19.md))
+- [ ] **Pilot runtime-helper** — **не на prod EDG**; staging VM или dev laptop — [runtime-helper-pilot-checklist.md](./runtime-helper-pilot-checklist.md)
 - [ ] **MemLayer reimport** TUN после изменения структуры (`MEMLAYER.md`, import script)
 - [ ] Подтвердить, что `monitoring/.env` никогда не попадал в git history (`git log -p -- monitoring/.env`)
 
@@ -31,3 +32,4 @@
 - [x] Ops worklog + decisions + backlog (этот каталог)
 - [x] MemLayer project TUN + memory entries
 - [x] Все `scripts/*.sh`: `rg` → `grep`
+- [x] Read-only infra recon SSH 2026-05-19 (`infra-recon-2026-05-19.md`)
