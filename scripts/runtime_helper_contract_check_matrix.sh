@@ -21,8 +21,8 @@ Options:
 EOF
 }
 
-current_schema_version="2026-04-13"
-next_schema_version="2026-04-14"
+current_schema_version="2026-04-19"
+next_schema_version="2026-04-20"
 allow_next_fail="true"
 timeout="5s"
 transport="tcp"

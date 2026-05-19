@@ -26,8 +26,8 @@ RELEASE_VALIDATE_PROD_MESH := ./scripts/release_validation_tunrnd_prod_mesh.sh
 CONTRACT_MATRIX := ./scripts/runtime_helper_contract_check_matrix.sh
 OUT_DIR ?= ./artifacts/runtime-helper-gate
 SUPPORT_KEY_FILE ?=
-CONTRACT_SCHEMA_CURRENT ?= 2026-04-10
-CONTRACT_SCHEMA_NEXT ?= 2026-04-11
+CONTRACT_SCHEMA_CURRENT ?= 2026-04-19
+CONTRACT_SCHEMA_NEXT ?= 2026-04-20
 CONTRACT_NEXT_ALLOW_FAIL ?= true
 
 help:
@@ -38,7 +38,7 @@ help:
 	@echo "  make gate-staging             # staging profile (skip support by default)"
 	@echo "  make gate-staging-full BUNDLE=<path> [ACTIVE_KEY=<id=path>]"
 	@echo "  make gate-staging-full-strict BUNDLE=<path> [ACTIVE_KEY=<id=path>] [REPORT=<path>]"
-	@echo "  make gate-contract-matrix [CONTRACT_SCHEMA_CURRENT=2026-04-10] [CONTRACT_SCHEMA_NEXT=2026-04-11] [CONTRACT_NEXT_ALLOW_FAIL=true]"
+	@echo "  make gate-contract-matrix [CONTRACT_SCHEMA_CURRENT=2026-04-19] [CONTRACT_SCHEMA_NEXT=2026-04-20] [CONTRACT_NEXT_ALLOW_FAIL=true]"
 	@echo "  make gate-local-quick-with-contract-matrix"
 	@echo "  make gate-bundle-local [OUT_DIR=./artifacts/runtime-helper-gate]"
 	@echo "  make gate-ubuntu22-baseline [SUPPORT_KEY_FILE=/etc/tun/support-signing-k2.key]"

@@ -62,7 +62,7 @@ lease_owner="${HELPER_LEASE_OWNER:-smoke}"
 contract_require_gateway_pool="${HELPER_CONTRACT_REQUIRE_GATEWAY_POOL:-true}"
 contract_require_gateway_policy="${HELPER_CONTRACT_REQUIRE_GATEWAY_POLICY:-true}"
 contract_require_rekey_policy="${HELPER_CONTRACT_REQUIRE_REKEY_POLICY:-true}"
-contract_schema_version="${HELPER_CONTRACT_SCHEMA_VERSION:-2026-04-13}"
+contract_schema_version="${HELPER_CONTRACT_SCHEMA_VERSION:-2026-04-19}"
 
 cleanup() {
   if [[ -n "${helper_pid:-}" ]]; then

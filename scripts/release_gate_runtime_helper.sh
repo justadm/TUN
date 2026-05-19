@@ -25,7 +25,7 @@ Options:
   --contract-require-gateway-pool true|false   (default: true)
   --contract-require-gateway-policy true|false (default: true)
   --contract-require-rekey-policy true|false   (default: true)
-  --contract-schema-version <ver>              (default: 2026-04-13; empty disables version check)
+  --contract-schema-version <ver>              (default: 2026-04-19; empty disables version check)
 
 Support bundle gate params:
   --bundle <path>
@@ -106,7 +106,7 @@ canary_continue_on_error="true"
 contract_require_gateway_pool="true"
 contract_require_gateway_policy="true"
 contract_require_rekey_policy="true"
-contract_schema_version="2026-04-13"
+contract_schema_version="2026-04-19"
 report_file=""
 declare -a step_reports=()
 

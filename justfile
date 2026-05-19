@@ -49,13 +49,13 @@ gate-ci-full:
 gate-local-quick:
   {{gate_script}} --profile local --skip-support-bundle-gate --skip-autopilot-canary
 
-gate-contract-matrix current_schema='2026-04-10' next_schema='2026-04-11' allow_next_fail='true':
+gate-contract-matrix current_schema='2026-04-19' next_schema='2026-04-20' allow_next_fail='true':
   {{contract_matrix_script}} \
     --current-schema-version "{{current_schema}}" \
     --next-schema-version "{{next_schema}}" \
     --allow-next-fail "{{allow_next_fail}}"
 
-gate-local-quick-with-contract-matrix current_schema='2026-04-10' next_schema='2026-04-11' allow_next_fail='true':
+gate-local-quick-with-contract-matrix current_schema='2026-04-19' next_schema='2026-04-20' allow_next_fail='true':
   just gate-contract-matrix "{{current_schema}}" "{{next_schema}}" "{{allow_next_fail}}"
   just gate-local-quick
 
