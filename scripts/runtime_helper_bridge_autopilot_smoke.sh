@@ -116,7 +116,7 @@ if [[ "${tick_count}" -lt 2 ]]; then
   exit 1
 fi
 
-if ! rg -q '"run":' "${daemon_out}" || ! rg -q '"at":' "${daemon_out}" || ! rg -q '"autopilot":' "${daemon_out}"; then
+if ! grep -qF '"run":' "${daemon_out}" || ! grep -qF '"at":' "${daemon_out}" || ! grep -qF '"autopilot":' "${daemon_out}"; then
   echo "daemon output does not contain required JSON fields" >&2
   cat "${daemon_out}" >&2
   exit 1

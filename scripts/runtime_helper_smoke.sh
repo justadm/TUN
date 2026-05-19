@@ -162,7 +162,7 @@ if [[ -z "${lease_id}" ]]; then
 fi
 
 status_json="$("${ctl_base[@]}" -action status)"
-if ! printf '%s' "${status_json}" | rg -q "\"leaseId\":\"${lease_id}\""; then
+if ! printf '%s' "${status_json}" | grep -qF "\"leaseId\":\"${lease_id}\""; then
   echo "status does not expose current lease snapshot" >&2
   exit 1
 fi
@@ -197,7 +197,7 @@ fi
   -lease-ttl "${timeout_sec}s" >/dev/null
 
 stats_json="$("${ctl_base[@]}" -action stats.read -lease-id "${lease_id}")"
-if ! printf '%s' "${stats_json}" | rg -q '"rekey"'; then
+if ! printf '%s' "${stats_json}" | grep -qF '"rekey"'; then
   echo "stats.read does not expose rekey aggregate block" >&2
   exit 1
 fi
@@ -205,7 +205,7 @@ fi
 
 "${ctl_base[@]}" -action diagnostics.export -lease-id "${lease_id}" > "${bundle_file}"
 
-if ! rg -q '"envelope_version"' "${bundle_file}"; then
+if ! grep -qF '"envelope_version"' "${bundle_file}"; then
   echo "diagnostics.export did not return support bundle envelope" >&2
   exit 1
 fi
